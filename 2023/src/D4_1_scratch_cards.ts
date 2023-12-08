@@ -10,17 +10,23 @@ import { puzzleInput } from "./D4_0_puzzle_input";
 const lines = puzzleInput.split("\n");
 
 interface GameData {
-    cardId: string;
+    cardId: number;
     winningNumbers: number[];
     guessingNumbers: number[];
+    wonCopies: number;
+
 }
 
-interface GameResult extends GameData {
-    rightGuesses: number | undefined;
+interface GameGuesses extends GameData {
+    rightGuesses: number;
 }
 
-interface GamePoints extends GameResult {
+interface GamePointsSingle extends GameGuesses {
     points: number;
+}
+
+interface GamePointsSum extends GamePointsSingle {
+    pointsSum: number;
 }
 
 function getGameDataFromLine(line: string): GameData {
@@ -31,18 +37,19 @@ function getGameDataFromLine(line: string): GameData {
         throw "No matches found!";
     }
 
-    const cardId = matches[1];
+    const cardId = parseInt(matches[1]);
     const winningNumbers = matches[2].trim().split(/\s+/).map(str => parseInt(str));
     const guessingNumbers = matches[3].trim().split(/\s+/).map(str => parseInt(str));
 
     return {
         cardId,
         winningNumbers,
-        guessingNumbers
+        guessingNumbers,
+        wonCopies: 0
     };
 }
 
-function getRightGuessesFromGame(game: GameData): GameResult {
+function getRightGuessesFromGame(game: GameData): GameGuesses {
     return {
         ...game,
         rightGuesses: game?.guessingNumbers
@@ -56,7 +63,7 @@ function getRightGuessesFromGame(game: GameData): GameResult {
     };
 }
 
-function getPointsOfGame(game: GameResult): GamePoints {
+function getPointsOfGame(game: GameGuesses): GamePointsSingle {
     return {
         ...game,
         points: game.rightGuesses ? Math.pow(2, game.rightGuesses - 1) : 0
@@ -64,11 +71,47 @@ function getPointsOfGame(game: GameResult): GamePoints {
 }
 
 
-const points = lines.map(getGameDataFromLine)
+const gameWithPoints = lines.map(getGameDataFromLine)
     .map(getRightGuessesFromGame)
-    .map(getPointsOfGame)
-    .reduce((sum, game) => { return sum + game.points }, 0);
+    .map(getPointsOfGame);
+
+const points = gameWithPoints
+    .reduce((sum, game) => {
+        return sum + game.points
+    }, 0);
+
+const scratchCopyMap = gameWithPoints.reduce((map, game) => {
+    map.set(game.cardId, game.points);
+    return map;
+}, new Map<number, number>());
 
 
+/*
+    1. Game: points: 2
+    2. Game: points: 2, Copy 1
+    3. Game: points: 2, Copy 2
 
-console.log(`Total points:${points}`);
+*/
+const gameCardCount = gameWithPoints.map(((game, index) => {
+    console.log(`Card ${game.cardId}:\trightGuesses: ${game.rightGuesses}\twonCopies: ${game.wonCopies}`)
+    for (let relativeIndex = 0; relativeIndex < game.rightGuesses; relativeIndex++) {
+        const absoluteIndex = index + relativeIndex + 1;
+        if (absoluteIndex >= gameWithPoints.length) {
+            continue;
+        }
+        gameWithPoints[absoluteIndex].wonCopies += game.wonCopies + 1;
+    }
+
+    return {
+        ...game,
+        cartCount: 1 + game.wonCopies
+    }
+}));
+
+const cartCount = gameCardCount
+    .reduce((sum, game) => {
+        return sum + game.cartCount
+    }, 0);
+
+console.log(`Total points: ${points}`);
+console.log(`Total card instance count: ${cartCount}`);
