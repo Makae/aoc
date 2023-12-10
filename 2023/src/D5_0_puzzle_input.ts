@@ -1,4 +1,4 @@
-/* const puzzleInputSeeds = `seeds: 630335678 71155519 260178142 125005421 1548082684 519777283 4104586697 30692976 1018893962 410959790 3570781652 45062110 74139777 106006724 3262608046 213460151 3022784256 121993130 2138898608 36769984`;
+const puzzleInputSeeds = `seeds: 630335678 71155519 260178142 125005421 1548082684 519777283 4104586697 30692976 1018893962 410959790 3570781652 45062110 74139777 106006724 3262608046 213460151 3022784256 121993130 2138898608 36769984`;
 
 const puzzleInputMappings = `seed-to-soil map:
 2977255263 3423361099 161177662
@@ -209,9 +209,9 @@ humidity-to-location map:
 536612207 1265535688 142084550
 757385927 84721366 32401782
 1327116227 694763977 520514661`;
- */
 
 
+/* 
 const puzzleInputSeeds = `seeds: 79 14 55 13`;
 
 const puzzleInputMappings = `seed-to-soil map:
@@ -244,7 +244,7 @@ temperature-to-humidity map:
 
 humidity-to-location map:
 60 56 37
-56 93 4`;
+56 93 4`; */
 
 
 export const mapOrder = [
@@ -293,12 +293,24 @@ const getMapData = (mappinglist: string): RangeSet => {
 
 export const seeds = puzzleInputSeeds.split(": ")[1].split(" ").map(v => parseInt(v));
 
+export const seedRanges = seeds.reduce((all: number[][], value) => {
+    let currentEntry = all[all.length-1];
+    if(currentEntry.length === 2) {
+        currentEntry = [];
+        all.push(currentEntry);
+    }
+    currentEntry.push(value);
 
-export const mappings = puzzleInputMappings.split("\n\n").map(line => {
+    return all;
+}, [[]])
+
+
+
+export const almanacMappings = puzzleInputMappings.split("\n\n").map(line => {
     return getMapData(line);
 }).reduce((map, current) => {
     map.set(current.name.split(" ")[0], current);
     return map;
 }, new Map<string, RangeSet>());
 
-console.log(mappings);
+console.log(almanacMappings);

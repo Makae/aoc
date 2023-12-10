@@ -1,5 +1,5 @@
 
-import { seeds, mappings, RangeSet, mapOrder } from "./D5_0_puzzle_input";
+import { seeds, almanacMappings, RangeSet, mapOrder } from "./D5_0_puzzle_input";
 
 function myFlatMap<T>(existing: any[], current: any[][]): T[] {
     return existing.concat(current);
@@ -19,24 +19,29 @@ const getDestinationValue = (value: number, rangeSet: RangeSet): number => {
 
 }
 
-type AlmanacEntry = [string, number, number];
-
-
-
 const result = seeds.map((seed) => {
     let previousValue = seed;
     return mapOrder.map(mapKey => {
-        if(mappings.has(mapKey)) {
+        if (!almanacMappings.has(mapKey)) {
             throw `Cannot find map for ${mapKey}`
         }
-        const dstValue = getDestinationValue(previousValue, mappings.get(mapKey)!);
+
+        const dstValue = getDestinationValue(previousValue, almanacMappings.get(mapKey)!);
+        const result = [mapKey, previousValue, dstValue];
 
         previousValue = dstValue;
-        return [mapKey, previousValue, dstValue];
-    });
+        return result;
+    })
+}).map((mappingGraph) => {
+    return [mappingGraph[0][1] as number, mappingGraph[mappingGraph.length - 1][2] as number] ;
 });
 
+const minLocationValue = result.reduce((current, entry) => {
+    return current < entry[1] ? current : entry[1]
+}, Number.MAX_VALUE);
+
 console.log(result);
+console.log(minLocationValue);
 /* 
 const almanac = seeds.map(seed => {
     return [...mappings.values()].map((value): AlmanacEntry => {
